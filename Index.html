@@ -1,9 +1,220 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time-Skill Alignment Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Hello! This works!</h1>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-6">
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Time-Skill Alignment Tracker</h1>
+            <p class="text-gray-600 mb-6">A leadership coaching tool to analyze where you invest your time, energy, and attention.</p>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                <h2 class="font-semibold text-gray-800 mb-2">How to Use This Tool:</h2>
+                <ol class="list-decimal list-inside space-y-2 text-gray-700 text-sm">
+                    <li>Track all major activities from your past week</li>
+                    <li>For each activity, note: hours spent, your skill level, strategic impact, and energy levels</li>
+                    <li>Review the analysis to identify perfectionism patterns and delegation opportunities</li>
+                    <li>Discuss insights with your coach</li>
+                </ol>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Activity Name</label>
+                    <input type="text" id="activityName" placeholder="e.g., Client presentations" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Hours Spent</label>
+                        <input type="number" id="hours" placeholder="5" step="0.5" min="0"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Your Skill Level</label>
+                        <select id="skillLevel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="good">Good at it</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="bad">Bad at it</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Strategic Impact</label>
+                        <select id="impact" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="high">High - Critical</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Energy After</label>
+                        <select id="energy" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="energized">Energized</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="drained">Drained</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="delegable" class="rounded">
+                        <span class="text-sm text-gray-700">Could someone else do this?</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="overInvested" class="rounded">
+                        <span class="text-sm text-gray-700">Spent more time than needed</span>
+                    </label>
+                </div>
+
+                <button onclick="addActivity()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
+                    Add Activity
+                </button>
+            </div>
+        </div>
+
+        <div id="results" class="hidden bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Your Activities</h2>
+            <div id="activityList" class="space-y-2 mb-6"></div>
+            
+            <div id="insights" class="mt-6 p-6 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+                <h3 class="font-semibold text-gray-800 mb-3">Key Insights:</h3>
+                <div id="insightsList"></div>
+            </div>
+
+            <button onclick="exportData()" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                Export Data
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let activities = [];
+
+        function addActivity() {
+            const name = document.getElementById('activityName').value;
+            const hours = parseFloat(document.getElementById('hours').value);
+            const skillLevel = document.getElementById('skillLevel').value;
+            const impact = document.getElementById('impact').value;
+            const energy = document.getElementById('energy').value;
+            const delegable = document.getElementById('delegable').checked;
+            const overInvested = document.getElementById('overInvested').checked;
+
+            if (!name || !hours) {
+                alert('Please enter activity name and hours');
+                return;
+            }
+
+            activities.push({
+                name, hours, skillLevel, impact, energy, delegable, overInvested,
+                id: Date.now()
+            });
+
+            document.getElementById('activityName').value = '';
+            document.getElementById('hours').value = '';
+            document.getElementById('delegable').checked = false;
+            document.getElementById('overInvested').checked = false;
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const resultDiv = document.getElementById('results');
+            const listDiv = document.getElementById('activityList');
+            
+            resultDiv.classList.remove('hidden');
+            listDiv.innerHTML = '';
+
+            activities.forEach(activity => {
+                const skillColor = activity.skillLevel === 'good' ? 'bg-green-100 text-green-800' :
+                                 activity.skillLevel === 'neutral' ? 'bg-yellow-100 text-yellow-800' :
+                                 'bg-red-100 text-red-800';
+                
+                const impactColor = activity.impact === 'high' ? 'bg-purple-100 text-purple-800' :
+                                  activity.impact === 'medium' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-gray-100 text-gray-800';
+
+                listDiv.innerHTML += `
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-medium">${activity.name}</span>
+                                <span class="text-gray-600 ml-2">(${activity.hours}h)</span>
+                                <div class="flex gap-2 mt-2">
+                                    <span class="px-2 py-1 rounded-full text-xs ${skillColor}">${activity.skillLevel}</span>
+                                    <span class="px-2 py-1 rounded-full text-xs ${impactColor}">${activity.impact} impact</span>
+                                    ${activity.delegable ? '<span class="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">delegable</span>' : ''}
+                                    ${activity.overInvested ? '<span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">over-invested</span>' : ''}
+                                </div>
+                            </div>
+                            <button onclick="deleteActivity(${activity.id})" class="text-red-600 hover:text-red-800">✕</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            generateInsights();
+        }
+
+        function deleteActivity(id) {
+            activities = activities.filter(a => a.id !== id);
+            updateDisplay();
+        }
+
+        function generateInsights() {
+            const insightsDiv = document.getElementById('insightsList');
+            const total = activities.reduce((sum, a) => sum + a.hours, 0);
+            
+            if (total === 0) return;
+
+            const goodHours = activities.filter(a => a.skillLevel === 'good').reduce((sum, a) => sum + a.hours, 0);
+            const delegableHours = activities.filter(a => a.delegable).reduce((sum, a) => sum + a.hours, 0);
+            const perfectionismHours = activities.filter(a => a.overInvested).reduce((sum, a) => sum + a.hours, 0);
+            const drainHours = activities.filter(a => a.energy === 'drained').reduce((sum, a) => sum + a.hours, 0);
+
+            let insights = [];
+
+            if (perfectionismHours > total * 0.2) {
+                insights.push(`⚠️ ${Math.round(perfectionismHours/total*100)}% of time shows perfectionism behaviors`);
+            }
+
+            if (delegableHours > total * 0.2) {
+                insights.push(`🎯 ${Math.round(delegableHours/total*100)}% (${delegableHours}h) could be delegated`);
+            }
+
+            if (drainHours > total * 0.25) {
+                insights.push(`🔋 ${Math.round(drainHours/total*100)}% of time leaves you drained - unsustainable`);
+            }
+
+            if (goodHours > total * 0.4 && goodHours < total * 0.7) {
+                insights.push(`✅ Good balance: ${Math.round(goodHours/total*100)}% leveraging strengths`);
+            }
+
+            insightsDiv.innerHTML = insights.map(i => `<p class="text-gray-700 mb-2">${i}</p>`).join('');
+        }
+
+        function exportData() {
+            const data = {
+                activities: activities,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'time-skill-analysis.json';
+            a.click();
+        }
+    </script>
 </body>
 </html>
